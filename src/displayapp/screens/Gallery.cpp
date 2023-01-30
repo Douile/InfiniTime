@@ -24,9 +24,9 @@ Gallery::~Gallery() {
 bool Gallery::OnTouchEvent(Pinetime::Applications::TouchEvents event) {
   switch (event) {
     case Pinetime::Applications::TouchEvents::SwipeRight:
-      return Open(index - 1, DisplayApp::FullRefreshDirections::Right);
+      return Open(index - 1, DisplayApp::FullRefreshDirections::None);
     case Pinetime::Applications::TouchEvents::SwipeLeft:
-      return Open(index + 1, DisplayApp::FullRefreshDirections::Left);
+      return Open(index + 1, DisplayApp::FullRefreshDirections::None);
     case Pinetime::Applications::TouchEvents::LongTap:
     case Pinetime::Applications::TouchEvents::DoubleTap:
       current->ToggleInfo();
