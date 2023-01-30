@@ -225,6 +225,9 @@ void DisplayApp::Refresh() {
               case TouchEvents::DoubleTap:
                 PushMessageToSystemTask(System::Messages::GoToSleep);
                 break;
+              case TouchEvents::SwipeLeft:
+                LoadApp(Apps::Gallery, DisplayApp::FullRefreshDirections::None);
+                break;
               default:
                 break;
             }
