@@ -54,6 +54,7 @@ namespace Pinetime {
         DirtyValue<uint8_t> heartbeat {};
         DirtyValue<bool> heartbeatRunning {};
         DirtyValue<bool> notificationState {};
+        DirtyValue<uint8_t> notificationCount {};
 
         lv_obj_t* label_time;
         lv_obj_t* label_date;
@@ -64,6 +65,7 @@ namespace Pinetime {
         lv_obj_t* stepValue;
         lv_obj_t* notificationIcon;
         lv_obj_t* connectState;
+        lv_obj_t* notificationValue;
 
         Controllers::DateTime& dateTimeController;
         Controllers::Battery& batteryController;

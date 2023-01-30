@@ -52,7 +52,7 @@ WatchFaceTerminal::WatchFaceTerminal(DisplayApp* app,
   lv_label_set_text_static(label_prompt_1, "user@watch:~ $ now");
 
   label_prompt_2 = lv_label_create(lv_scr_act(), nullptr);
-  lv_obj_align(label_prompt_2, lv_scr_act(), LV_ALIGN_IN_LEFT_MID, 0, 60);
+  lv_obj_align(label_prompt_2, lv_scr_act(), LV_ALIGN_IN_LEFT_MID, 0, 80);
   lv_label_set_text_static(label_prompt_2, "user@watch:~ $");
 
   label_time = lv_label_create(lv_scr_act(), nullptr);
@@ -66,6 +66,10 @@ WatchFaceTerminal::WatchFaceTerminal(DisplayApp* app,
   stepValue = lv_label_create(lv_scr_act(), nullptr);
   lv_label_set_recolor(stepValue, true);
   lv_obj_align(stepValue, lv_scr_act(), LV_ALIGN_IN_LEFT_MID, 0, 0);
+
+  notificationValue = lv_label_create(lv_scr_act(), nullptr);
+  lv_label_set_recolor(notificationValue, true);
+  lv_obj_align(notificationValue, lv_scr_act(), LV_ALIGN_IN_LEFT_MID, 0, 60);
 
   taskRefresh = lv_task_create(RefreshTaskCallback, LV_DISP_DEF_REFR_PERIOD, LV_TASK_PRIO_MID, this);
   Refresh();
@@ -172,5 +176,10 @@ void WatchFaceTerminal::Refresh() {
   motionSensorOk = motionController.IsSensorOk();
   if (stepCount.IsUpdated() || motionSensorOk.IsUpdated()) {
     lv_label_set_text_fmt(stepValue, "[STEP]#ee3377 %lu steps#", stepCount.Get());
+  }
+
+  notificationCount = notificationManager.NbNotifications();
+  if (notificationCount.IsUpdated()) {
+    lv_label_set_text_fmt(notificationValue, "[NOTO]%d", notificationCount.Get());
   }
 }
