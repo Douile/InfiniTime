@@ -16,6 +16,7 @@ void TimerController::Init(Pinetime::System::SystemTask* systemTask) {
 void TimerController::StartTimer(uint32_t duration) {
   xTimerChangePeriod(timer, pdMS_TO_TICKS(duration), 0);
   xTimerStart(timer, 0);
+  state = TimerState::Running;
 }
 
 uint32_t TimerController::GetTimeRemaining() {
@@ -28,6 +29,7 @@ uint32_t TimerController::GetTimeRemaining() {
 
 void TimerController::StopTimer() {
   xTimerStop(timer, 0);
+  state = TimerState::Stopped;
 }
 
 bool TimerController::IsRunning() {
@@ -36,8 +38,10 @@ bool TimerController::IsRunning() {
 
 void TimerController::OnTimerEnd() {
   systemTask->PushMessage(System::Messages::OnTimerDone);
+  state = TimerState::Alerting;
 }
 
 void TimerController::Clear() {
   systemTask->PushMessage(System::Messages::StopRinging);
+  state = TimerState::Stopped;
 }

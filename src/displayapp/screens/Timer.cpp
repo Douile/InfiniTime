@@ -5,6 +5,7 @@
 #include <lvgl/lvgl.h>
 
 using namespace Pinetime::Applications::Screens;
+using Pinetime::Controllers::TimerController;
 
 static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
   auto* screen = static_cast<Timer*>(obj->user_data);
@@ -15,6 +16,14 @@ static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
   } else if (event == LV_EVENT_SHORT_CLICKED) {
     screen->ToggleRunning();
   }
+}
+
+bool Timer::OnButtonPushed() {
+  if (timerController.State() == TimerController::TimerState::Alerting) {
+    Reset();
+    return true;
+  }
+  return false;
 }
 
 Timer::Timer(DisplayApp* app, Controllers::TimerController& timerController) : Screen(app), timerController {timerController} {
@@ -62,10 +71,16 @@ Timer::Timer(DisplayApp* app, Controllers::TimerController& timerController) : S
   txtPlayPause = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_align(txtPlayPause, btnPlayPause, LV_ALIGN_CENTER, 0, 0);
 
-  if (timerController.IsRunning()) {
-    SetTimerRunning();
-  } else {
-    SetTimerStopped();
+  switch (timerController.State()) {
+    case TimerController::TimerState::Running:
+      SetTimerRunning();
+      break;
+    case TimerController::TimerState::Stopped:
+      SetTimerStopped();
+      break;
+    case TimerController::TimerState::Alerting:
+      SetTimerAlerting();
+      break;
   }
 
   taskRefresh = lv_task_create(RefreshTaskCallback, LV_DISP_DEF_REFR_PERIOD, LV_TASK_PRIO_MID, this);
@@ -103,8 +118,7 @@ void Timer::UpdateMask() {
 }
 
 void Timer::Refresh() {
-  if (timerRinging && buttonPressing) {
-    MaskReset();
+  if (buttonPressing && timerController.State() == TimerController::TimerState::Alerting) {
     Reset();
   } else if (timerController.IsRunning()) {
     uint32_t seconds = timerController.GetTimeRemaining() / 1000;
@@ -134,6 +148,12 @@ void Timer::SetTimerStopped() {
   lv_label_set_text_static(txtPlayPause, "Start");
 }
 
+void Timer::SetTimerAlerting() {
+  minuteCounter.HideControls();
+  secondCounter.HideControls();
+  lv_label_set_text_static(txtPlayPause, "Clear");
+}
+
 void Timer::ToggleRunning() {
   if (timerController.IsRunning()) {
     uint32_t seconds = timerController.GetTimeRemaining() / 1000;
@@ -146,11 +166,6 @@ void Timer::ToggleRunning() {
     Refresh();
     SetTimerRunning();
   }
-}
-
-void Timer::SetTimerRinging() {
-  timerRinging = true;
-  lv_label_set_text_static(txtPlayPause, "Clear");
 }
 
 void Timer::Reset() {

@@ -11,6 +11,8 @@ namespace Pinetime {
 
     class TimerController {
     public:
+      enum class TimerState { Stopped, Running, Alerting };
+
       TimerController() = default;
 
       void Init(System::SystemTask* systemTask);
@@ -27,9 +29,14 @@ namespace Pinetime {
 
       void Clear();
 
+      TimerState State() const {
+        return state;
+      }
+
     private:
       System::SystemTask* systemTask = nullptr;
       TimerHandle_t timer;
+      TimerState state = TimerState::Stopped;
     };
   }
 }

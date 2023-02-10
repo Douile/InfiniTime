@@ -18,8 +18,9 @@ namespace Pinetime::Applications::Screens {
     void Reset();
     void ToggleRunning();
     void ButtonPressed();
-    void SetTimerRinging();
+    bool OnButtonPushed() override;
     void MaskReset();
+    void SetTimerAlerting();
 
   private:
     void SetTimerRunning();
