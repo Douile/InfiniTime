@@ -37,3 +37,7 @@ bool TimerController::IsRunning() {
 void TimerController::OnTimerEnd() {
   systemTask->PushMessage(System::Messages::OnTimerDone);
 }
+
+void TimerController::Clear() {
+  systemTask->PushMessage(System::Messages::StopRinging);
+}

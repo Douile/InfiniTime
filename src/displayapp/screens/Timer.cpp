@@ -103,7 +103,10 @@ void Timer::UpdateMask() {
 }
 
 void Timer::Refresh() {
-  if (timerController.IsRunning()) {
+  if (timerRinging && buttonPressing) {
+    MaskReset();
+    Reset();
+  } else if (timerController.IsRunning()) {
     uint32_t seconds = timerController.GetTimeRemaining() / 1000;
     minuteCounter.SetValue(seconds / 60);
     secondCounter.SetValue(seconds % 60);
@@ -145,8 +148,14 @@ void Timer::ToggleRunning() {
   }
 }
 
+void Timer::SetTimerRinging() {
+  timerRinging = true;
+  lv_label_set_text_static(txtPlayPause, "Clear");
+}
+
 void Timer::Reset() {
   minuteCounter.SetValue(0);
   secondCounter.SetValue(0);
+  timerController.Clear();
   SetTimerStopped();
 }

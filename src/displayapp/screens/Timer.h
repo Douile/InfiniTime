@@ -18,6 +18,7 @@ namespace Pinetime::Applications::Screens {
     void Reset();
     void ToggleRunning();
     void ButtonPressed();
+    void SetTimerRinging();
     void MaskReset();
 
   private:
@@ -40,6 +41,7 @@ namespace Pinetime::Applications::Screens {
     Widgets::Counter secondCounter = Widgets::Counter(0, 59, jetbrains_mono_76);
 
     bool buttonPressing = false;
+    bool timerRinging = false;
     int maskPosition = 0;
     TickType_t pressTime;
   };

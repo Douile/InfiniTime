@@ -186,7 +186,7 @@ void DisplayApp::Refresh() {
       case Messages::TimerDone:
         if (currentApp == Apps::Timer) {
           auto* timer = static_cast<Screens::Timer*>(currentScreen.get());
-          timer->Reset();
+          timer->SetTimerRinging();
         } else {
           LoadApp(Apps::Timer, DisplayApp::FullRefreshDirections::Down);
         }

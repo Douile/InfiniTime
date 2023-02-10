@@ -25,6 +25,8 @@ namespace Pinetime {
 
       void OnTimerEnd();
 
+      void Clear();
+
     private:
       System::SystemTask* systemTask = nullptr;
       TimerHandle_t timer;
