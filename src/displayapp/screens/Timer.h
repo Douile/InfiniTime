@@ -12,7 +12,7 @@
 namespace Pinetime::Applications::Screens {
   class Timer : public Screen {
   public:
-    Timer(DisplayApp* app, Controllers::TimerController& timerController);
+    Timer(Controllers::TimerController& timerController);
     ~Timer() override;
     void Refresh() override;
     void Reset();
@@ -28,7 +28,6 @@ namespace Pinetime::Applications::Screens {
     void UpdateMask();
     Controllers::TimerController& timerController;
 
-    lv_obj_t* msecTime;
     lv_obj_t* btnPlayPause;
     lv_obj_t* txtPlayPause;
 
@@ -43,7 +42,7 @@ namespace Pinetime::Applications::Screens {
 
     bool buttonPressing = false;
     bool timerRinging = false;
-    int maskPosition = 0;
-    TickType_t pressTime;
+    lv_coord_t maskPosition = 0;
+    TickType_t pressTime = 0;
   };
 }

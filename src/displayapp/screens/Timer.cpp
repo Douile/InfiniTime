@@ -26,7 +26,7 @@ bool Timer::OnButtonPushed() {
   return false;
 }
 
-Timer::Timer(DisplayApp* app, Controllers::TimerController& timerController) : Screen(app), timerController {timerController} {
+Timer::Timer(Controllers::TimerController& timerController) : timerController {timerController} {
 
   lv_obj_t* colonLabel = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_set_style_local_text_font(colonLabel, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
@@ -121,9 +121,9 @@ void Timer::Refresh() {
   if (buttonPressing && timerController.State() == TimerController::TimerState::Alerting) {
     Reset();
   } else if (timerController.IsRunning()) {
-    uint32_t seconds = timerController.GetTimeRemaining() / 1000;
-    minuteCounter.SetValue(seconds / 60);
-    secondCounter.SetValue(seconds % 60);
+    auto secondsRemaining = std::chrono::duration_cast<std::chrono::seconds>(timerController.GetTimeRemaining());
+    minuteCounter.SetValue(secondsRemaining.count() / 60);
+    secondCounter.SetValue(secondsRemaining.count() % 60);
   } else if (buttonPressing && xTaskGetTickCount() > pressTime + pdMS_TO_TICKS(150)) {
     lv_label_set_text_static(txtPlayPause, "Reset");
     maskPosition += 15;
@@ -156,13 +156,14 @@ void Timer::SetTimerAlerting() {
 
 void Timer::ToggleRunning() {
   if (timerController.IsRunning()) {
-    uint32_t seconds = timerController.GetTimeRemaining() / 1000;
-    minuteCounter.SetValue(seconds / 60);
-    secondCounter.SetValue(seconds % 60);
+    auto secondsRemaining = std::chrono::duration_cast<std::chrono::seconds>(timerController.GetTimeRemaining());
+    minuteCounter.SetValue(secondsRemaining.count() / 60);
+    secondCounter.SetValue(secondsRemaining.count() % 60);
     timerController.StopTimer();
     SetTimerStopped();
   } else if (secondCounter.GetValue() + minuteCounter.GetValue() > 0) {
-    timerController.StartTimer((secondCounter.GetValue() + minuteCounter.GetValue() * 60) * 1000);
+    auto timerDuration = std::chrono::minutes(minuteCounter.GetValue()) + std::chrono::seconds(secondCounter.GetValue());
+    timerController.StartTimer(timerDuration);
     Refresh();
     SetTimerRunning();
   }

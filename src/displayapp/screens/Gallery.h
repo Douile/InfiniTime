@@ -26,6 +26,7 @@ namespace Pinetime {
         bool Open(int n, DisplayApp::FullRefreshDirections direction);
         int nScreens;
         int index;
+        DisplayApp* app;
       };
     }
   }
