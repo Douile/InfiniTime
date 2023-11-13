@@ -5,7 +5,6 @@
 #include <lvgl/lvgl.h>
 
 using namespace Pinetime::Applications::Screens;
-using Pinetime::Controllers::TimerController;
 
 static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
   auto* screen = static_cast<Timer*>(obj->user_data);
@@ -18,15 +17,7 @@ static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
   }
 }
 
-bool Timer::OnButtonPushed() {
-  if (timerController.State() == TimerController::TimerState::Alerting) {
-    Reset();
-    return true;
-  }
-  return false;
-}
-
-Timer::Timer(Controllers::TimerController& timerController) : timerController {timerController} {
+Timer::Timer(Controllers::Timer& timerController) : timer {timerController} {
 
   lv_obj_t* colonLabel = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_set_style_local_text_font(colonLabel, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
@@ -71,16 +62,10 @@ Timer::Timer(Controllers::TimerController& timerController) : timerController {t
   txtPlayPause = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_align(txtPlayPause, btnPlayPause, LV_ALIGN_CENTER, 0, 0);
 
-  switch (timerController.State()) {
-    case TimerController::TimerState::Running:
-      SetTimerRunning();
-      break;
-    case TimerController::TimerState::Stopped:
-      SetTimerStopped();
-      break;
-    case TimerController::TimerState::Alerting:
-      SetTimerAlerting();
-      break;
+  if (timerController.IsRunning()) {
+    SetTimerRunning();
+  } else {
+    SetTimerStopped();
   }
 
   taskRefresh = lv_task_create(RefreshTaskCallback, LV_DISP_DEF_REFR_PERIOD, LV_TASK_PRIO_MID, this);
@@ -100,7 +85,7 @@ void Timer::MaskReset() {
   buttonPressing = false;
   // A click event is processed before a release event,
   // so the release event would override the "Pause" text without this check
-  if (!timerController.IsRunning()) {
+  if (!timer.IsRunning()) {
     lv_label_set_text_static(txtPlayPause, "Start");
   }
   maskPosition = 0;
@@ -118,10 +103,8 @@ void Timer::UpdateMask() {
 }
 
 void Timer::Refresh() {
-  if (buttonPressing && timerController.State() == TimerController::TimerState::Alerting) {
-    Reset();
-  } else if (timerController.IsRunning()) {
-    auto secondsRemaining = std::chrono::duration_cast<std::chrono::seconds>(timerController.GetTimeRemaining());
+  if (timer.IsRunning()) {
+    auto secondsRemaining = std::chrono::duration_cast<std::chrono::seconds>(timer.GetTimeRemaining());
     minuteCounter.SetValue(secondsRemaining.count() / 60);
     secondCounter.SetValue(secondsRemaining.count() % 60);
   } else if (buttonPressing && xTaskGetTickCount() > pressTime + pdMS_TO_TICKS(150)) {
@@ -155,15 +138,15 @@ void Timer::SetTimerAlerting() {
 }
 
 void Timer::ToggleRunning() {
-  if (timerController.IsRunning()) {
-    auto secondsRemaining = std::chrono::duration_cast<std::chrono::seconds>(timerController.GetTimeRemaining());
+  if (timer.IsRunning()) {
+    auto secondsRemaining = std::chrono::duration_cast<std::chrono::seconds>(timer.GetTimeRemaining());
     minuteCounter.SetValue(secondsRemaining.count() / 60);
     secondCounter.SetValue(secondsRemaining.count() % 60);
-    timerController.StopTimer();
+    timer.StopTimer();
     SetTimerStopped();
   } else if (secondCounter.GetValue() + minuteCounter.GetValue() > 0) {
     auto timerDuration = std::chrono::minutes(minuteCounter.GetValue()) + std::chrono::seconds(secondCounter.GetValue());
-    timerController.StartTimer(timerDuration);
+    timer.StartTimer(timerDuration);
     Refresh();
     SetTimerRunning();
   }
@@ -172,6 +155,5 @@ void Timer::ToggleRunning() {
 void Timer::Reset() {
   minuteCounter.SetValue(0);
   secondCounter.SetValue(0);
-  timerController.Clear();
   SetTimerStopped();
 }

@@ -39,7 +39,6 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
                        Controllers::Battery& batteryController,
                        Controllers::Ble& bleController,
                        Controllers::DateTime& dateTimeController,
-                       Controllers::TimerController& timerController,
                        Controllers::AlarmController& alarmController,
                        Drivers::Watchdog& watchdog,
                        Pinetime::Controllers::NotificationManager& notificationManager,
@@ -61,7 +60,6 @@ SystemTask::SystemTask(Drivers::SpiMaster& spi,
     batteryController {batteryController},
     bleController {bleController},
     dateTimeController {dateTimeController},
-    timerController {timerController},
     alarmController {alarmController},
     watchdog {watchdog},
     notificationManager {notificationManager},
@@ -103,9 +101,9 @@ void SystemTask::Process(void* instance) {
 void SystemTask::Work() {
   BootErrors bootError = BootErrors::None;
 
-  watchdog.Setup(7);
+  watchdog.Setup(7, Drivers::Watchdog::SleepBehaviour::Run, Drivers::Watchdog::HaltBehaviour::Pause);
   watchdog.Start();
-  NRF_LOG_INFO("Last reset reason : %s", Pinetime::Drivers::Watchdog::ResetReasonToString(watchdog.ResetReason()));
+  NRF_LOG_INFO("Last reset reason : %s", Pinetime::Drivers::ResetReasonToString(watchdog.GetResetReason()));
   APP_GPIOTE_INIT(2);
 
   spi.Init();
@@ -129,7 +127,6 @@ void SystemTask::Work() {
   dateTimeController.Register(this);
   batteryController.Register(this);
   motionSensor.SoftReset();
-  timerController.Init(this);
   alarmController.Init(this);
 
   // Reset the TWI device because the motion sensor chip most probably crashed it...
@@ -257,13 +254,6 @@ void SystemTask::Work() {
             }
             displayApp.PushMessage(Pinetime::Applications::Display::Messages::NewNotification);
           }
-          break;
-        case Messages::OnTimerDone:
-          if (state == SystemTaskState::Sleeping) {
-            GoToRunning();
-          }
-          motorController.StartRinging();
-          displayApp.PushMessage(Pinetime::Applications::Display::Messages::TimerDone);
           break;
         case Messages::SetOffAlarm:
           if (state == SystemTaskState::Sleeping) {
@@ -415,7 +405,7 @@ void SystemTask::Work() {
     dateTimeController.UpdateTime(systick_counter);
     NoInit_BackUpTime = dateTimeController.CurrentDateTime();
     if (nrf_gpio_pin_read(PinMap::Button) == 0) {
-      watchdog.Kick();
+      watchdog.Reload();
     }
   }
 #pragma clang diagnostic pop
@@ -438,7 +428,6 @@ void SystemTask::UpdateMotion() {
 
   auto motionValues = motionSensor.Process();
 
-  motionController.IsSensorOk(motionSensor.IsOk());
   motionController.Update(motionValues.x, motionValues.y, motionValues.z, motionValues.steps);
 
   if (settingsController.GetNotificationStatus() != Controllers::Settings::Notification::Sleep) {
